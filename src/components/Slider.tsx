@@ -15,11 +15,11 @@ export const Slider: React.FC<SliderProps> = ({ slides, interval = 3000 }) => {
     const touchEndX = useRef<number | null>(null);
 
     const nextSlide = (): void => {
-        setCurrent(prev => (prev === slides.length - 1 ? 0 : prev + 1));
+        setCurrent(prev => (prev + 1) % slides.length);
     };
 
     const prevSlide = (): void => {
-        setCurrent(prev => (prev === 0 ? slides.length - 1 : prev - 1));
+        setCurrent(prev => (prev - 1 + slides.length) % slides.length);
     };
 
     useEffect(() => {
@@ -92,8 +92,9 @@ export const Slider: React.FC<SliderProps> = ({ slides, interval = 3000 }) => {
                     <button
                         key={i}
                         onClick={() => setCurrent(i)}
-                        className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${i === current ? "bg-white" : "bg-gray-400"
-                            }`}
+                        className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${
+                            i === current ? "bg-white" : "bg-gray-400"
+                        }`}
                     />
                 ))}
             </div>
