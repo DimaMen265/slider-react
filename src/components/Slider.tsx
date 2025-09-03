@@ -7,19 +7,44 @@ type SliderProps = {
 };
 
 export const Slider: React.FC<SliderProps> = ({ slides, interval = 3000 }) => {
-    const [current, setCurrent] = useState<number>(0);
+    const [current, setCurrent] = useState<number>(1);
+    const [isAnimating, setIsAnimating] = useState<boolean>(true);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [isPaused, setIsPaused] = useState<boolean>(false);
 
     const touchStartX = useRef<number | null>(null);
     const touchEndX = useRef<number | null>(null);
 
+    const extendedSlides = [
+        slides[slides.length - 1],
+        ...slides,
+        slides[0],
+    ];
+
     const nextSlide = (): void => {
-        setCurrent(prev => (prev + 1) % slides.length);
+        if (current >= slides.length) {
+            setCurrent(current + 1);
+            setTimeout(() => {
+                setIsAnimating(false);
+                setCurrent(1);
+            }, 500);
+        } else {
+            setIsAnimating(true);
+            setCurrent(prev => prev + 1);
+        }
     };
 
     const prevSlide = (): void => {
-        setCurrent(prev => (prev - 1 + slides.length) % slides.length);
+        if (current <= 0) {
+            setCurrent(current - 1);
+            setTimeout(() => {
+                setIsAnimating(false);
+                setCurrent(slides.length);
+            }, 500);
+        } else {
+            setIsAnimating(true);
+            setCurrent(prev => prev - 1);
+        }
     };
 
     useEffect(() => {
@@ -29,7 +54,7 @@ export const Slider: React.FC<SliderProps> = ({ slides, interval = 3000 }) => {
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [isPaused, interval]);
+    }, [isPaused, interval, current]);
 
     const handleTouchStart = (e: React.TouchEvent) => {
         touchStartX.current = e.touches[0].clientX;
@@ -52,6 +77,14 @@ export const Slider: React.FC<SliderProps> = ({ slides, interval = 3000 }) => {
         touchEndX.current = null;
     };
 
+    useEffect(() => {
+        if (!isAnimating) {
+            requestAnimationFrame(() => {
+                setIsAnimating(true);
+            });
+        }
+    }, [isAnimating]);
+
     return (
         <div
             className="relative w-full max-w-4xl h-[300px] sm:h-[350px] md:h-[400px] overflow-hidden mx-auto rounded-2xl shadow-lg"
@@ -61,10 +94,10 @@ export const Slider: React.FC<SliderProps> = ({ slides, interval = 3000 }) => {
             onTouchEnd={handleTouchEnd}
         >
             <div
-                className="flex transition-transform duration-500 ease-in-out"
+                className={`flex ${isAnimating ? "transition-transform duration-500 ease-in-out" : ""}`}
                 style={{ transform: `translateX(-${current * 100}%)` }}
             >
-                {slides.map((slide, index) => (
+                {extendedSlides.map((slide, index) => (
                     <div
                         key={index}
                         className="w-full h-full flex-shrink-0 flex items-center justify-center bg-gray-100"
@@ -91,10 +124,9 @@ export const Slider: React.FC<SliderProps> = ({ slides, interval = 3000 }) => {
                 {slides.map((_, i: number) => (
                     <button
                         key={i}
-                        onClick={() => setCurrent(i)}
-                        className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${
-                            i === current ? "bg-white" : "bg-gray-400"
-                        }`}
+                        onClick={() => setCurrent(i + 1)}
+                        className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${i + 1 === current ? "bg-white" : "bg-gray-400"
+                            }`}
                     />
                 ))}
             </div>
